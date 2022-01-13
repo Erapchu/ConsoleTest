@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using TestLibrary;
 
@@ -17,7 +18,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            AssemblyTest();
+            DnsTest();
+            //AssemblyTest();
             //DirectoryInfoTest("Z:\\");
             //TryParseChecks();
             //OverflowChecks();
@@ -34,6 +36,20 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static void DnsTest()
+        {
+            var uncPath = UNCPathHelper.GetConnectionPath("Z:\\");
+            Console.WriteLine($"UNC path: \"{uncPath}\"");
+            var hostName = uncPath.Split('\\', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            Console.WriteLine($"Host name: {hostName}");
+
+            var hostEntry = Dns.GetHostEntry(hostName);
+            foreach (var address in hostEntry.AddressList)
+            {
+                Console.WriteLine($"IP: {address}");
+            }
         }
 
         private static void AssemblyTest()
