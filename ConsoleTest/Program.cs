@@ -18,7 +18,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            DnsTest();
+            BoxingTest();
+            //DnsTest();
             //AssemblyTest();
             //DirectoryInfoTest("Z:\\");
             //TryParseChecks();
@@ -36,6 +37,50 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static void BoxingTest()
+        {
+            Console.ReadKey();
+
+            var sw = Stopwatch.StartNew();
+            for (int i = 0; i < int.MaxValue; i++)
+            {
+                i.GetHashCode();
+            }
+            sw.Stop();
+
+            Console.WriteLine(sw.Elapsed);
+
+            sw = Stopwatch.StartNew();
+            for (int i = 0; i < int.MaxValue; i++)
+            {
+                HashCode.Combine(i);
+            }
+            sw.Stop();
+
+            Console.WriteLine(sw.Elapsed);
+
+            //Combine(1);
+            //Combine(new object());
+        }
+
+        public static int Combine<T1>(T1 value1)
+        {
+            uint hc1 = (uint)(value1?.GetHashCode() ?? 0);
+            hc1 = (uint)(value1 != null ? value1.GetHashCode() : 0);
+            if (value1 != null)
+            {
+                hc1 = (uint)value1.GetHashCode();
+            }
+
+            //uint hash = MixEmptyState();
+            //hash += 4;
+
+            //hash = QueueRound(hash, hc1);
+
+            //hash = MixFinal(hash);
+            return (int)hc1;
         }
 
         private static void DnsTest()
