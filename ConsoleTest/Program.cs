@@ -44,7 +44,7 @@ namespace ConsoleTest
             Console.ReadKey();
 
             var sw = Stopwatch.StartNew();
-            for (int i = 0; i < int.MaxValue; i++)
+            for (int i = 0; i < 100000000; i++)
             {
                 i.GetHashCode();
             }
@@ -53,7 +53,7 @@ namespace ConsoleTest
             Console.WriteLine(sw.Elapsed);
 
             sw = Stopwatch.StartNew();
-            for (int i = 0; i < int.MaxValue; i++)
+            for (int i = 0; i < 100000000; i++)
             {
                 HashCode.Combine(i);
             }
@@ -74,13 +74,23 @@ namespace ConsoleTest
                 hc1 = (uint)value1.GetHashCode();
             }
 
+            var isNull = value1 == null;
+            if (isNull)
+            {
+                hc1 = 0;
+            }
+            else
+            {
+                hc1 = (uint)value1.GetHashCode();
+            }
+
             //uint hash = MixEmptyState();
             //hash += 4;
 
             //hash = QueueRound(hash, hc1);
 
             //hash = MixFinal(hash);
-            return (int)hc1;
+            return 0;
         }
 
         private static void DnsTest()
