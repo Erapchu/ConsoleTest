@@ -19,7 +19,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            GetIpAddress();
+            GetResourceStringDictionary();
+            //GetIpAddress();
             //BoxingTest();
             //DnsTest();
             //AssemblyTest();
@@ -39,6 +40,15 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static void GetResourceStringDictionary()
+        {
+            var en = Resources.String1;
+            Console.WriteLine(en);
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+            var ru = Resources.String1;
+            Console.WriteLine(ru);
         }
 
         private static void GetIpAddress()
