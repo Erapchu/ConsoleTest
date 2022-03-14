@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using TestLibrary;
 
@@ -18,7 +19,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            BoxingTest();
+            GetIpAddress();
+            //BoxingTest();
             //DnsTest();
             //AssemblyTest();
             //DirectoryInfoTest("Z:\\");
@@ -37,6 +39,15 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static void GetIpAddress()
+        {
+            string localIP;
+            using Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, 0);
+            socket.Connect("8.8.8.8", 65530);
+            IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+            localIP = endPoint.Address.ToString();
         }
 
         private static void BoxingTest()
