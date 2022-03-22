@@ -77,7 +77,23 @@ namespace ConsoleTest
                 CloseClipboard();
 
                 if (hWnd != IntPtr.Zero)
-                    PostMessage(hWnd, WM_PASTE, IntPtr.Zero, IntPtr.Zero);
+                {
+                    System.Threading.Thread.Sleep(1000);
+                    var bVk = Encoding.Unicode.GetBytes(new[] { 'V' }).FirstOrDefault();
+                    keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
+                    keybd_event(bVk, 0, 0, UIntPtr.Zero);
+                    keybd_event(bVk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+                    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+
+                    // Non-working
+                    //PostMessage(hWnd, WM_KEYDOWN, new IntPtr(VK_CONTROL), IntPtr.Zero);
+                    //PostMessage(hWnd, WM_KEYDOWN, new IntPtr(bVk), IntPtr.Zero);
+                    //PostMessage(hWnd, WM_KEYUP, new IntPtr(bVk), IntPtr.Zero);
+                    //PostMessage(hWnd, WM_KEYUP, new IntPtr(VK_CONTROL), IntPtr.Zero);
+
+                    // Working with Native like WinForms
+                    //PostMessage(hWnd, WM_PASTE, IntPtr.Zero, IntPtr.Zero);
+                }
             }
             finally
             {
@@ -86,10 +102,17 @@ namespace ConsoleTest
             }
         }
 
+        public const int VK_CONTROL = 0x11;
+        public const int KEYEVENTF_KEYUP = 0x0002;
+
         public const uint WM_PASTE = 0x0302;
+        public const uint WM_KEYDOWN = 0x0100;
+        public const uint WM_KEYUP = 0x0101;
         public const uint CF_UNICODETEXT = 0xD; // 13
         public const uint CF_TEXT = 0x1; // 1
 
+        [DllImport("user32.dll")]
+        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
         /// <summary>
         /// Places (posts) a message in the message queue associated with the thread
         /// that created the specified window and returns without waiting for the
