@@ -7,6 +7,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using TestLibrary;
 
 namespace ConsoleTest
@@ -19,7 +21,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            GetResourceStringDictionary();
+            PasteClipboardDataToActiveWindow();
+            //GetResourceStringDictionary();
             //GetIpAddress();
             //BoxingTest();
             //DnsTest();
@@ -41,6 +44,77 @@ namespace ConsoleTest
 
             Console.ReadKey();
         }
+
+        private static void PasteClipboardDataToActiveWindow()
+        {
+            IntPtr hWnd = IntPtr.Zero;
+            string hWndString = null;
+            while (string.IsNullOrWhiteSpace(hWndString) || hWndString.Length != 8)
+            {
+                Console.Write("Input hWnd of active window in HEX format (for example - 00440A62): ");
+                hWndString = Console.ReadLine();
+                hWnd = new IntPtr(Convert.ToInt32(hWndString, 16));
+            }
+
+            string inputData = null;
+            while (string.IsNullOrWhiteSpace(inputData))
+            {
+                Console.Write("Input data: ");
+                inputData = Console.ReadLine();
+            }
+
+            inputData += "\0";
+
+            var strBytes = Encoding.Unicode.GetBytes(inputData);
+            IntPtr hglobal = IntPtr.Zero;
+            try
+            {
+                hglobal = Marshal.AllocHGlobal(strBytes.Length);
+                Marshal.Copy(strBytes, 0, hglobal, strBytes.Length);
+                OpenClipboard(IntPtr.Zero);
+                EmptyClipboard();
+                SetClipboardData(CF_UNICODETEXT, hglobal);
+                CloseClipboard();
+
+                if (hWnd != IntPtr.Zero)
+                    PostMessage(hWnd, WM_PASTE, IntPtr.Zero, IntPtr.Zero);
+            }
+            finally
+            {
+                if (hglobal != IntPtr.Zero)
+                    Marshal.FreeHGlobal(hglobal);
+            }
+        }
+
+        public const uint WM_PASTE = 0x0302;
+        public const uint CF_UNICODETEXT = 0xD; // 13
+        public const uint CF_TEXT = 0x1; // 1
+
+        /// <summary>
+        /// Places (posts) a message in the message queue associated with the thread
+        /// that created the specified window and returns without waiting for the
+        /// thread to process the message.
+        /// </summary>
+        /// <param name="hWnd">A handle to the window whose window procedure will receive the message.</param>
+        /// <param name="Msg">The message to be sent.</param>
+        /// <param name="wParam">Additional message-specific information.</param>
+        /// <param name="lParam">second message parameter</param>
+        /// <returns></returns>
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool OpenClipboard(IntPtr hWndNewOwner);
+
+        [DllImport("user32.dll")]
+        static extern bool EmptyClipboard();
+
+        [DllImport("user32.dll")]
+        static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool CloseClipboard();
 
         private static void GetResourceStringDictionary()
         {
