@@ -7,8 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Threading;
 using TestLibrary;
 
 namespace ConsoleTest
@@ -54,57 +53,14 @@ namespace ConsoleTest
                 inputData = Console.ReadLine();
             }
 
-            var hglobal = Marshal.StringToHGlobalUni(inputData);
-            OpenClipboard(IntPtr.Zero);
-            EmptyClipboard();
-            SetClipboardData(CF_UNICODETEXT, hglobal);
-            Marshal.FreeHGlobal(hglobal);
-            CloseClipboard();
+            WindowsClipboard.SetText(inputData);
 
-            System.Threading.Thread.Sleep(1000);
-            keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
-            keybd_event(VK_V, 0, 0, UIntPtr.Zero);
-            keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-            keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+            Thread.Sleep(1000);
+            Windows_keybd_event.keybd_event(Windows_keybd_event.VK_CONTROL, 0, 0, UIntPtr.Zero);
+            Windows_keybd_event.keybd_event(Windows_keybd_event.VK_V, 0, 0, UIntPtr.Zero);
+            Windows_keybd_event.keybd_event(Windows_keybd_event.VK_V, 0, Windows_keybd_event.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            Windows_keybd_event.keybd_event(Windows_keybd_event.VK_CONTROL, 0, Windows_keybd_event.KEYEVENTF_KEYUP, UIntPtr.Zero);
         }
-
-        public const byte VK_V = 0x56;
-        public const byte VK_CONTROL = 0x11;
-        public const int KEYEVENTF_KEYUP = 0x0002;
-
-        public const uint WM_PASTE = 0x0302;
-        public const uint WM_KEYDOWN = 0x0100;
-        public const uint WM_KEYUP = 0x0101;
-        public const uint CF_UNICODETEXT = 0xD; // 13
-        public const uint CF_TEXT = 0x1; // 1
-
-        [DllImport("user32.dll")]
-        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-        /// <summary>
-        /// Places (posts) a message in the message queue associated with the thread
-        /// that created the specified window and returns without waiting for the
-        /// thread to process the message.
-        /// </summary>
-        /// <param name="hWnd">A handle to the window whose window procedure will receive the message.</param>
-        /// <param name="Msg">The message to be sent.</param>
-        /// <param name="wParam">Additional message-specific information.</param>
-        /// <param name="lParam">second message parameter</param>
-        /// <returns></returns>
-        [return: MarshalAs(UnmanagedType.Bool)]
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool OpenClipboard(IntPtr hWndNewOwner);
-
-        [DllImport("user32.dll")]
-        static extern bool EmptyClipboard();
-
-        [DllImport("user32.dll")]
-        static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool CloseClipboard();
 
         private static void GetResourceStringDictionary()
         {
