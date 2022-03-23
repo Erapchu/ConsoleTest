@@ -47,15 +47,6 @@ namespace ConsoleTest
 
         private static void PasteClipboardDataToActiveWindow()
         {
-            IntPtr hWnd = IntPtr.Zero;
-            string hWndString = null;
-            while (string.IsNullOrWhiteSpace(hWndString) || hWndString.Length != 8)
-            {
-                Console.Write("Input hWnd of active window in HEX format (for example - 00440A62): ");
-                hWndString = Console.ReadLine();
-                hWnd = new IntPtr(Convert.ToInt32(hWndString, 16));
-            }
-
             string inputData = null;
             while (string.IsNullOrWhiteSpace(inputData))
             {
@@ -63,46 +54,22 @@ namespace ConsoleTest
                 inputData = Console.ReadLine();
             }
 
-            inputData += "\0";
+            var hglobal = Marshal.StringToHGlobalUni(inputData);
+            OpenClipboard(IntPtr.Zero);
+            EmptyClipboard();
+            SetClipboardData(CF_UNICODETEXT, hglobal);
+            Marshal.FreeHGlobal(hglobal);
+            CloseClipboard();
 
-            var strBytes = Encoding.Unicode.GetBytes(inputData);
-            IntPtr hglobal = IntPtr.Zero;
-            try
-            {
-                hglobal = Marshal.AllocHGlobal(strBytes.Length);
-                Marshal.Copy(strBytes, 0, hglobal, strBytes.Length);
-                OpenClipboard(IntPtr.Zero);
-                EmptyClipboard();
-                SetClipboardData(CF_UNICODETEXT, hglobal);
-                CloseClipboard();
-
-                if (hWnd != IntPtr.Zero)
-                {
-                    System.Threading.Thread.Sleep(1000);
-                    var bVk = Encoding.Unicode.GetBytes(new[] { 'V' }).FirstOrDefault();
-                    keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
-                    keybd_event(bVk, 0, 0, UIntPtr.Zero);
-                    keybd_event(bVk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-                    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-
-                    // Non-working
-                    //PostMessage(hWnd, WM_KEYDOWN, new IntPtr(VK_CONTROL), IntPtr.Zero);
-                    //PostMessage(hWnd, WM_KEYDOWN, new IntPtr(bVk), IntPtr.Zero);
-                    //PostMessage(hWnd, WM_KEYUP, new IntPtr(bVk), IntPtr.Zero);
-                    //PostMessage(hWnd, WM_KEYUP, new IntPtr(VK_CONTROL), IntPtr.Zero);
-
-                    // Working with Native like WinForms
-                    //PostMessage(hWnd, WM_PASTE, IntPtr.Zero, IntPtr.Zero);
-                }
-            }
-            finally
-            {
-                if (hglobal != IntPtr.Zero)
-                    Marshal.FreeHGlobal(hglobal);
-            }
+            System.Threading.Thread.Sleep(1000);
+            keybd_event(VK_CONTROL, 0, 0, UIntPtr.Zero);
+            keybd_event(VK_V, 0, 0, UIntPtr.Zero);
+            keybd_event(VK_V, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+            keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
         }
 
-        public const int VK_CONTROL = 0x11;
+        public const byte VK_V = 0x56;
+        public const byte VK_CONTROL = 0x11;
         public const int KEYEVENTF_KEYUP = 0x0002;
 
         public const uint WM_PASTE = 0x0302;
