@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using TestLibrary;
 
@@ -20,7 +21,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            PasteClipboardDataToActiveWindow();
+            GetCaretPosOnForegroundWindow();
+            //PasteClipboardDataToActiveWindow();
             //GetResourceStringDictionary();
             //GetIpAddress();
             //BoxingTest();
@@ -42,6 +44,81 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+        
+        private static void GetCaretPosOnForegroundWindow()
+        {
+            Thread.Sleep(2000);
+            var hFore = GetForegroundWindow();
+            var last1 = Marshal.GetLastWin32Error();
+            var idAttach = GetWindowThreadProcessId(hFore, out uint id);
+            var last2 = Marshal.GetLastWin32Error();
+            var curThreadId = GetCurrentThreadId();
+            var last3 = Marshal.GetLastWin32Error();
+
+            // To attach to current thread
+            var sa = AttachThreadInput(idAttach, curThreadId, true);
+            var last4 = Marshal.GetLastWin32Error();
+
+            var caretPos = GetCaretPos(out POINT caretPoint);
+            //try
+            //{
+            //    throw new System.ComponentModel.Win32Exception();
+            //}
+            //catch (Exception ex)
+            //{
+
+            //}
+
+            ClientToScreen(hFore, ref caretPoint);
+            var last6 = Marshal.GetLastWin32Error();
+
+            // To dettach from current thread
+            var sd = AttachThreadInput(idAttach, curThreadId, false);
+
+            var data = string.Format("X={0}, Y={1}", caretPoint.X, caretPoint.Y);
+            Console.WriteLine(data);
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern uint GetCurrentThreadId();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool GetCaretPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        static extern bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+
+            public POINT(int x, int y)
+            {
+                this.X = x;
+                this.Y = y;
+            }
+
+            public static implicit operator System.Drawing.Point(POINT p)
+            {
+                return new System.Drawing.Point(p.X, p.Y);
+            }
+
+            public static implicit operator POINT(System.Drawing.Point p)
+            {
+                return new POINT(p.X, p.Y);
+            }
         }
 
         private static void PasteClipboardDataToActiveWindow()
