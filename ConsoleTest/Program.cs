@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using TestLibrary;
+using Accessibility;
 
 namespace ConsoleTest
 {
@@ -21,7 +22,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            GetCaretPosOnForegroundWindow();
+            GetCaretPositionUIAutomation();
+            //GetCaretPosOnForegroundWindow();
             //PasteClipboardDataToActiveWindow();
             //GetResourceStringDictionary();
             //GetIpAddress();
@@ -45,33 +47,102 @@ namespace ConsoleTest
 
             Console.ReadKey();
         }
-        
+
+        private static void GetCaretPositionUIAutomation()
+        {
+            while (true)
+            {
+                try
+                {
+                    var hFore = GetForegroundWindow();
+                    var info = new GUITHREADINFO();
+                    info.cbSize = Marshal.SizeOf(info);
+                    if (GetGUIThreadInfo(0, ref info))
+                    {
+                        var hwndFocus = info.hwndFocus;
+                        var guid = typeof(IAccessible).GUID;
+                        object accessibleObject = null;
+                        var retVal = AccessibleObjectFromWindow(hwndFocus, OBJID_CARET, ref guid, ref accessibleObject);
+                        IAccessible accessible = accessibleObject as IAccessible;
+                        int left = 0;
+                        int top = 0;
+                        int width = 0;
+                        int height = 0;
+                        accessible.accLocation(out left, out top, out width, out height);
+                        Console.WriteLine($"Position: l={left} t={top}, w={width}, h={height}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+                finally
+                {
+                    Thread.Sleep(1000);
+                }
+            }
+        }
+
+        private const uint OBJID_WINDOW = 0x00000000;
+        private const uint OBJID_SYSMENU = 0xFFFFFFFF;
+        private const uint OBJID_TITLEBAR = 0xFFFFFFFE;
+        private const uint OBJID_MENU = 0xFFFFFFFD;
+        private const uint OBJID_CLIENT = 0xFFFFFFFC;
+        private const uint OBJID_VSCROLL = 0xFFFFFFFB;
+        private const uint OBJID_HSCROLL = 0xFFFFFFFA;
+        private const uint OBJID_SIZEGRIP = 0xFFFFFFF9;
+        private const uint OBJID_CARET = 0xFFFFFFF8;
+        private const uint OBJID_CURSOR = 0xFFFFFFF7;
+        private const uint OBJID_ALERT = 0xFFFFFFF6;
+        private const uint OBJID_SOUND = 0xFFFFFFF5;
+
+        [DllImport("oleacc.dll")]
+        internal static extern int AccessibleObjectFromWindow(
+         IntPtr hwnd,
+         uint id,
+         ref Guid iid,
+         [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
+
+        [DllImport("user32.dll")]
+        static extern bool GetGUIThreadInfo(uint idThread, ref GUITHREADINFO lpgui);
+
+        [Flags]
+        public enum GuiThreadInfoFlags
+        {
+            GUI_CARETBLINKING = 0x00000001,
+            GUI_INMENUMODE = 0x00000004,
+            GUI_INMOVESIZE = 0x00000002,
+            GUI_POPUPMENUMODE = 0x00000010,
+            GUI_SYSTEMMENUMODE = 0x00000008
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct GUITHREADINFO
+        {
+            public int cbSize;
+            public GuiThreadInfoFlags flags;
+            public IntPtr hwndActive;
+            public IntPtr hwndFocus;
+            public IntPtr hwndCapture;
+            public IntPtr hwndMenuOwner;
+            public IntPtr hwndMoveSize;
+            public IntPtr hwndCaret;
+            public System.Drawing.Rectangle rcCaret;
+        }
+
         private static void GetCaretPosOnForegroundWindow()
         {
             Thread.Sleep(2000);
             var hFore = GetForegroundWindow();
-            var last1 = Marshal.GetLastWin32Error();
             var idAttach = GetWindowThreadProcessId(hFore, out uint id);
-            var last2 = Marshal.GetLastWin32Error();
             var curThreadId = GetCurrentThreadId();
-            var last3 = Marshal.GetLastWin32Error();
 
             // To attach to current thread
             var sa = AttachThreadInput(idAttach, curThreadId, true);
-            var last4 = Marshal.GetLastWin32Error();
 
             var caretPos = GetCaretPos(out POINT caretPoint);
-            //try
-            //{
-            //    throw new System.ComponentModel.Win32Exception();
-            //}
-            //catch (Exception ex)
-            //{
-
-            //}
 
             ClientToScreen(hFore, ref caretPoint);
-            var last6 = Marshal.GetLastWin32Error();
 
             // To dettach from current thread
             var sd = AttachThreadInput(idAttach, curThreadId, false);
