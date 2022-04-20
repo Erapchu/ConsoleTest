@@ -64,11 +64,7 @@ namespace ConsoleTest
                         object accessibleObject = null;
                         var retVal = AccessibleObjectFromWindow(hwndFocus, OBJID_CARET, ref guid, ref accessibleObject);
                         IAccessible accessible = accessibleObject as IAccessible;
-                        int left = 0;
-                        int top = 0;
-                        int width = 0;
-                        int height = 0;
-                        accessible.accLocation(out left, out top, out width, out height);
+                        accessible.accLocation(out int left, out int top, out int width, out int height, CHILDID_SELF);
                         Console.WriteLine($"Position: l={left} t={top}, w={width}, h={height}");
                     }
                 }
@@ -83,6 +79,7 @@ namespace ConsoleTest
             }
         }
 
+        private const int CHILDID_SELF = 0;
         private const uint OBJID_WINDOW = 0x00000000;
         private const uint OBJID_SYSMENU = 0xFFFFFFFF;
         private const uint OBJID_TITLEBAR = 0xFFFFFFFE;
