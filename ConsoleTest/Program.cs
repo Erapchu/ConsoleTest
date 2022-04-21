@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using TestLibrary;
-using Accessibility;
+using UIAutomationClient;
 
 namespace ConsoleTest
 {
@@ -22,7 +22,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            GetCaretPositionUIAutomation();
+            GetCaretCoordinatesOnScreen();
+            GetCaretPosition();
             //GetCaretPosOnForegroundWindow();
             //PasteClipboardDataToActiveWindow();
             //GetResourceStringDictionary();
@@ -48,7 +49,7 @@ namespace ConsoleTest
             Console.ReadKey();
         }
 
-        private static void GetCaretPositionUIAutomation()
+        private static void GetCaretCoordinatesOnScreen()
         {
             while (true)
             {
@@ -77,6 +78,83 @@ namespace ConsoleTest
                     Thread.Sleep(1000);
                 }
             }
+        }
+
+        private static void GetCaretPosition()
+        {
+            // needs 'using UIAutomationClient;'
+            // to reference UIA, don't use the .NET assembly
+            // but instead, reference the UIAutomationClient dll as a COM object
+            // and set Embed Interop Types to False for the UIAutomationClient reference in the C# project
+            var automation = new CUIAutomation8();
+            do
+            {
+                try
+                {
+                    if (GetCursorPos(out POINT lpPoint))
+                    {
+                        var element = automation.ElementFromPoint(new tagPOINT { x = lpPoint.X, y = lpPoint.Y });
+                        if (element != null)
+                        {
+                            Console.WriteLine("Watched element " + element.CurrentName);
+                            var guid = typeof(UIAutomationClient.IUIAutomationTextPattern2).GUID;
+                            var ptr = element.GetCurrentPatternAs(UIA_PatternIds.UIA_TextPattern2Id, ref guid);
+                            if (ptr != IntPtr.Zero)
+                            {
+                                var pattern = (IUIAutomationTextPattern2)Marshal.GetObjectForIUnknown(ptr);
+                                if (pattern != null)
+                                {
+                                    var documentRange = pattern.DocumentRange;
+                                    var caretRange = pattern.GetCaretRange(out _);
+                                    if (caretRange != null)
+                                    {
+                                        var rects = caretRange.GetBoundingRectangles();
+                                        Console.WriteLine($"Rects {string.Join(" ", rects.OfType<double>().ToList())}");
+                                        var caretPos = caretRange.CompareEndpoints(
+                                            UIAutomationClient.TextPatternRangeEndpoint.TextPatternRangeEndpoint_Start,
+                                            documentRange,
+                                            UIAutomationClient.TextPatternRangeEndpoint.TextPatternRangeEndpoint_Start);
+                                        Console.WriteLine(" caret is at " + caretPos);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                guid = typeof(UIAutomationClient.IUIAutomationTextPattern).GUID;
+                                ptr = element.GetCurrentPatternAs(UIA_PatternIds.UIA_TextPatternId, ref guid);
+                                if (ptr != IntPtr.Zero)
+                                {
+                                    var pattern = (IUIAutomationTextPattern)Marshal.GetObjectForIUnknown(ptr);
+                                    if (pattern != null)
+                                    {
+                                        var documentRange = pattern.DocumentRange;
+                                        var boundingRect = documentRange.GetBoundingRectangles();
+                                        Console.WriteLine($"Rects {string.Join(" ", boundingRect.OfType<double>().ToList())}");
+                                        //var caretRange = pattern.GetCaretRange(out _);
+                                        //if (caretRange != null)
+                                        //{
+                                        //    var caretPos = caretRange.CompareEndpoints(
+                                        //        UIAutomationClient.TextPatternRangeEndpoint.TextPatternRangeEndpoint_Start,
+                                        //        documentRange,
+                                        //        UIAutomationClient.TextPatternRangeEndpoint.TextPatternRangeEndpoint_Start);
+                                        //    Console.WriteLine(" caret is at " + caretPos);
+                                        //}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+                finally
+                {
+                    Thread.Sleep(500);
+                }
+            }
+            while (true);
         }
 
         private const int CHILDID_SELF = 0;
@@ -126,6 +204,10 @@ namespace ConsoleTest
             public IntPtr hwndCaret;
             public System.Drawing.Rectangle rcCaret;
         }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetCursorPos(out POINT lpPoint);
 
         private static void GetCaretPosOnForegroundWindow()
         {

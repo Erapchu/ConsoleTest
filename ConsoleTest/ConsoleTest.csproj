@@ -6,14 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <COMReference Include="Accessibility">
+    <COMReference Include="UIAutomationClient">
       <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>1</VersionMinor>
+      <VersionMinor>0</VersionMinor>
       <VersionMajor>1</VersionMajor>
-      <Guid>1ea4dbf0-3c3b-11cf-810c-00aa00389b71</Guid>
+      <Guid>944de083-8fb8-45cf-bcb7-c477acb2f897</Guid>
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
 
