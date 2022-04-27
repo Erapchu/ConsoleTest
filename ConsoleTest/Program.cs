@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ConsoleTest.KeyboardHook;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using TestLibrary;
 using UIAutomationClient;
 
@@ -19,11 +21,11 @@ namespace ConsoleTest
     {
         private const string SpecializedSymbolSequence = "XXX";
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            GetForegroundWindowText();
-            //GlobalKeyboardHook();
+            //GetForegroundWindowText();
+            //GlobalKeyboardHookImpl.Start(); // Just for example, shouldn't be used in Console apps
             //GetForegroundWindowText();
             //GetCaretCoordinatesOnScreen();
             //GetCaretPosition();
@@ -50,22 +52,6 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
-        }
-
-        private static async void GlobalKeyboardHook()
-        {
-            var listener = new LowLevelKeyboardListener();
-            listener.OnKeyPressed += Listener_OnKeyPressed;
-            listener.HookKeyboard();
-
-            await System.Threading.Tasks.Task.Delay(10000);
-
-            listener.UnHookKeyboard();
-        }
-
-        private static void Listener_OnKeyPressed(object sender, KeyPressedArgs e)
-        {
-            Console.WriteLine($"Pressed: {e/*.KeyPressed*/}");
         }
 
         private static void GetForegroundWindowText()

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace ConsoleTest
+namespace ConsoleTest.KeyboardHook
 {
     public class LowLevelKeyboardListener
     {
