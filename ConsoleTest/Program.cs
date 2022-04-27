@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using TestLibrary;
 using UIAutomationClient;
@@ -21,9 +22,11 @@ namespace ConsoleTest
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-
-            GetCaretCoordinatesOnScreen();
-            GetCaretPosition();
+            GetForegroundWindowText();
+            //GlobalKeyboardHook();
+            //GetForegroundWindowText();
+            //GetCaretCoordinatesOnScreen();
+            //GetCaretPosition();
             //GetCaretPosOnForegroundWindow();
             //PasteClipboardDataToActiveWindow();
             //GetResourceStringDictionary();
@@ -47,6 +50,43 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static async void GlobalKeyboardHook()
+        {
+            var listener = new LowLevelKeyboardListener();
+            listener.OnKeyPressed += Listener_OnKeyPressed;
+            listener.HookKeyboard();
+
+            await System.Threading.Tasks.Task.Delay(10000);
+
+            listener.UnHookKeyboard();
+        }
+
+        private static void Listener_OnKeyPressed(object sender, KeyPressedArgs e)
+        {
+            Console.WriteLine($"Pressed: {e/*.KeyPressed*/}");
+        }
+
+        private static void GetForegroundWindowText()
+        {
+            while (true)
+            {
+                try
+                {
+                    var hwnd = GetForegroundWindow();
+                    var text = GetText(hwnd);
+                    Console.WriteLine(text);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+                finally
+                {
+                    Thread.Sleep(500);
+                }
+            }
         }
 
         private static void GetCaretCoordinatesOnScreen()
@@ -269,6 +309,21 @@ namespace ConsoleTest
             {
                 return new POINT(p.X, p.Y);
             }
+        }
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern int GetWindowTextLength(IntPtr hWnd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        public static string GetText(IntPtr hWnd)
+        {
+            // Allocate correct string length first
+            int length = GetWindowTextLength(hWnd);
+            StringBuilder sb = new StringBuilder(length + 1);
+            GetWindowText(hWnd, sb, sb.Capacity);
+            return sb.ToString();
         }
 
         private static void PasteClipboardDataToActiveWindow()
