@@ -23,6 +23,9 @@ namespace ConsoleTest
         public static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
+
+            GetHashCode(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+
             //WinApiProvider.GetForegroundWindowText();
             //GlobalKeyboardHookImpl.Start(); // Just for example, shouldn't be used in Console apps
             //WinApiProvider.GetCaretCoordinatesAccessible();
@@ -50,6 +53,46 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        /// <summary>
+        /// unsafe is necessary to deal in pointers.
+        /// fixed has two uses:
+        /// it allows you to pin an array and obtain a pointer to the data
+        /// when used in an unsafe struct field, it declares a "fixed buffer" - a reserved block of space in a type that is accessed via pointers rather than regular fields
+        /// To answer with a specific example - here's some code that is used to perform semantic equality between two byte[] of arbitrary size...
+        /// So if, for example, the buffer was 1000 items, by treating it as a set of long we now only do 125 iterations rather than having to look individually at all 1000 
+        /// - plus we completely bypass any array bounds checking (which the JIT may or may not remove, depending on how obvious it looks that you can't possibly be violating them).
+        /// https://stackoverflow.com/questions/21981132/whats-the-use-of-c-sharp-keyword-fixed-unsafe
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static unsafe int GetHashCode(byte[] value)
+        {
+            unchecked
+            {
+                if (value == null) return -1;
+                int len = value.Length;
+                if (len == 0) return 0;
+                int octects = len / 8, spare = len % 8;
+                int acc = 728271210;
+                fixed (byte* ptr8 = value)
+                {
+                    long* ptr64 = (long*)ptr8;
+                    for (int i = 0; i < octects; i++)
+                    {
+                        long val = ptr64[i];
+                        int valHash = (((int)val) ^ ((int)(val >> 32)));
+                        acc = (((acc << 5) + acc) ^ valHash);
+                    }
+                    int offset = len - spare;
+                    while (spare-- != 0)
+                    {
+                        acc = (((acc << 5) + acc) ^ ptr8[offset++]);
+                    }
+                }
+                return acc;
+            }
         }
 
         private static void GetResourceStringDictionary()
