@@ -20,12 +20,14 @@ namespace ConsoleTest
     {
         private const string SpecializedSymbolSequence = "XXX";
 
+        private static Mutex _mut;
+
         public static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
 
-            GetHashCode(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
-
+            MutexTest();
+            //GetHashCode(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
             //WinApiProvider.GetForegroundWindowText();
             //GlobalKeyboardHookImpl.Start(); // Just for example, shouldn't be used in Console apps
             //WinApiProvider.GetCaretCoordinatesAccessible();
@@ -53,6 +55,46 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static void MutexTest()
+        {
+            _mut = new Mutex(true, "Global\\test", out bool createdNew);
+            if (createdNew)
+            {
+                Console.WriteLine("New instance created with initially owned = true");
+            }
+            else if (IsInstance())
+            {
+                Console.WriteLine("New Instance created...");
+            }
+            else
+            {
+                Console.WriteLine("Instance already acquired...");
+            }
+            if (createdNew)
+            {
+                Thread.Sleep(1000);
+                _mut.ReleaseMutex();
+                Console.WriteLine("Mutex released");
+            }
+            Console.ReadLine();
+        }
+
+        private static bool IsInstance()
+        {
+            if (!_mut.WaitOne(0))
+            {
+                Console.WriteLine("Thread id {0} Waiting at Mutex...", Thread.CurrentThread.ManagedThreadId);
+                return false;
+            }
+            else
+            {
+                Console.WriteLine("Thread id {0} got Mutex...", Thread.CurrentThread.ManagedThreadId);
+                Thread.Sleep(500);
+                _mut.ReleaseMutex();
+                return true;
+            }
         }
 
         /// <summary>
