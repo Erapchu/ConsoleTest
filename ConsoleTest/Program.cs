@@ -7,11 +7,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using TestLibrary;
 
 namespace ConsoleTest
@@ -26,7 +28,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            MutexTest();
+            DownloadFileWithProgress();
+            //MutexTest();
             //GetHashCode(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
             //WinApiProvider.GetForegroundWindowText();
             //GlobalKeyboardHookImpl.Start(); // Just for example, shouldn't be used in Console apps
@@ -55,6 +58,28 @@ namespace ConsoleTest
             //TestPaths();
 
             Console.ReadKey();
+        }
+
+        private static async Task DownloadFileWithProgress()
+        {
+            // for the sake of the example lets add a client definition here
+            var client = new HttpClient();
+            var docUrl = "https://pspdfkit.com/downloads/case-study-box.pdf";
+            var filePath = Path.Combine(Path.GetTempPath(), "case-study-box.pdf");
+
+            // Setup your progress reporter
+            var progress = new Progress<float>();
+            progress.ProgressChanged += Progress_ProgressChanged;
+
+            // Use the provided extension method
+            using var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await client.DownloadDataAsync(docUrl, file, progress);
+        }
+
+        private static void Progress_ProgressChanged(object sender, float progress)
+        {
+            // Do something with your progress
+            Console.WriteLine(progress);
         }
 
         private static void MutexTest()
