@@ -1,4 +1,5 @@
 ﻿using ConsoleTest.KeyboardHook;
+using ConsoleTest.SOLID.OpenClosed;
 using ConsoleTest.WinApi;
 using System;
 using System.Collections.Concurrent;
@@ -28,7 +29,8 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            DownloadFileWithProgress();
+            new AnimalController().AnimalSound(AnimalController.Animals);
+            //DownloadFileWithProgress();
             //MutexTest();
             //GetHashCode(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
             //WinApiProvider.GetForegroundWindowText();
