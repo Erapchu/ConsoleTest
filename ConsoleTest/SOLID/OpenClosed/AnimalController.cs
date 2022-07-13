@@ -19,7 +19,7 @@ namespace ConsoleTest.SOLID.OpenClosed
         {
             foreach (Animal animal in animals)
             {
-                // each class is opened for modification
+                // Each derived class (from Animal) is opened for extention
                 // We will not change Animal class directly, but create subclasses and override behavior
                 animal.MakeSound();
             }
