@@ -15,6 +15,9 @@ namespace ConsoleTest.SOLID.OpenClosed
 
         }
 
-        public virtual void MakeSound() { }
+        public virtual void MakeSound()
+        {
+            // return "arrarrarggh - some sound"
+        }
     }
 }
