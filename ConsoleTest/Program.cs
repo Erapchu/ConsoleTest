@@ -29,7 +29,6 @@ namespace ConsoleTest
         {
             Console.WriteLine("Hello World!");
 
-            new AnimalController().AnimalSound(AnimalController.Animals);
             //DownloadFileWithProgress();
             //MutexTest();
             //GetHashCode(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
